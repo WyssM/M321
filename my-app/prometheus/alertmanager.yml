@@ -1,0 +1,20 @@
+global:
+  smtp_smarthost: 'sandbox.smtp.mailtrap.io:2525'
+  smtp_from: 'M321@alertmanager.com'
+  smtp_auth_username: '4edc5cbae138aa'
+  smtp_auth_password: 'ea13cb478aead4'
+  smtp_require_tls: true
+
+route:
+  receiver: 'email-notifications'
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'michael.wyss@wiss-edu.ch'
+        send_resolved: true
+        from: 'M321@alertmanager.com'
+        auth_username: '4edc5cbae138aa'
+        auth_password: 'ea13cb478aead4'
+        require_tls: true
+        smarthost: 'sandbox.smtp.mailtrap.io:2525'

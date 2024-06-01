@@ -1,0 +1,55 @@
+groups:
+  - name: container
+    rules:
+      - alert: HighCpuUsage
+        expr: sum(rate(container_cpu_usage_seconds_total[1m])) > 0.85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected for container {{ $labels.container_name }}"
+          description: "CPU usage is above 85% for more than 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: sum(container_memory_usage_bytes) / sum(machine_memory_bytes) > 0.75
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected for container {{ $labels.container_name }}"
+          description: "Memory usage is above 75% for more than 1 minute."
+
+      - alert: ContainerRestarts
+        expr: increase(container_restart_count_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_name }} is restarting frequently"
+          description: "Container has restarted more than 5 times in the last 5 minutes."
+
+      - alert: HighDiskUsage
+        expr: sum(container_fs_usage_bytes) / sum(container_fs_limit_bytes) > 0.9
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage detected for container {{ $labels.container_name }}"
+          description: "Disk usage is above 90% for more than 1 minute."
+
+      - alert: NetworkIOErrors
+        expr: rate(container_network_receive_errors_total[1m]) + rate(container_network_transmit_errors_total[1m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Network I/O errors detected for container {{ $labels.container_name }}"
+          description: "Container is experiencing network I/O errors."
+
+      - alert: ContainerDown
+        expr: up == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_name }} is down"
+          description: "{{ $labels.container_name }} is not running."

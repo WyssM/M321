@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  broker:
+    build: ./mqtt-broker
+    container_name: mqtt_broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - monitoring
+
+  sensor1:
+    image: mqtt-sensor:1.0
+    container_name: mqtt_sensor1
+    command:
+      ["java", "-jar", "mqtt-sensor.jar", "sensor1", "feedback1"]
+    depends_on:
+      - broker
+    environment:
+      - MQTT_BROKER=tcp://broker:1883
+    networks:
+      - monitoring
+
+  sensor2:
+    image: mqtt-sensor:1.0
+    container_name: mqtt_sensor2
+    command:
+      [ "java", "-jar", "mqtt-sensor.jar", "sensor2", "feedback2" ]
+    depends_on:
+      - broker
+    environment:
+      - MQTT_BROKER=tcp://broker:1883
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - broker
+    networks:
+      - monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
+    ports:
+      - "8082:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    depends_on:
+      - broker
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+    depends_on:
+      - cadvisor
+    networks:
+      - monitoring
+
+  alertmanager:
+      image: prom/alertmanager:latest
+      ports:
+        - 9093:9093
+      volumes:
+        - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml/
+      depends_on:
+        - prometheus
+      networks:
+            - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
